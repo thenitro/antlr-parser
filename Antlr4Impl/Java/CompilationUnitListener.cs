@@ -18,8 +18,11 @@ namespace antlr_parser.Antlr4Impl.Java
         public override void EnterCompilationUnit(JavaParser.CompilationUnitContext context)
         {
             PackageDeclarationListener packageDeclarationListener = new PackageDeclarationListener();
-            context.packageDeclaration().EnterRule(packageDeclarationListener);
-            
+            if (context.packageDeclaration() != null)
+            {
+                context.packageDeclaration().EnterRule(packageDeclarationListener);
+            }
+
             string qualifiedName = packageDeclarationListener.QualifiedName;
 
             TypeDeclarationListener typeDeclarationListener = new TypeDeclarationListener(filePath, qualifiedName);
