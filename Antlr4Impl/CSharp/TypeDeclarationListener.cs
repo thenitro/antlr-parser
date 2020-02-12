@@ -5,6 +5,7 @@ using Antlr4Gen.CSharp;
 
 namespace antlr_parser.Antlr4Impl.CSharp
 {
+    //With this, I'm basically attempting to mimic the Java implementation of this listener to then make my way to the class and member methods
     public class TypeDeclarationListener : CSharpParserBaseListener
     {
         readonly string parentFilePath;
