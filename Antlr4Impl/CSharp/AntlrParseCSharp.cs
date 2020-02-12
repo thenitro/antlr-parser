@@ -7,7 +7,7 @@ namespace antlr_parser.Antlr4Impl.CSharp
 {
     public static class AntlrParseCSharp
     {
-        public static IEnumerable<ClassInfo> OuterClassInfosFromJavaSource(string source, string filePath)
+        public static IEnumerable<ClassInfo> OuterClassInfosFromCSharpSource(string source, string filePath)
         {
             try
             {
@@ -22,10 +22,16 @@ namespace antlr_parser.Antlr4Impl.CSharp
                 parser.AddErrorListener(new ErrorListener()); // add ours
 
                 // TODO find the highest level compilation unity and start a listener
-                
-                
+                CompilationUnitListener compilationUnitListener = new CompilationUnitListener(filePath);
+
+                //Tried this, learned I couldn't iterate over what I wanted to
+                //parser.compilation_unit().EnterRule(compilationUnitListener);
+                //using this works for entering namespace
+                parser.namespace_member_declarations().EnterRule(compilationUnitListener);
+
                 // replace this
-                return new List<ClassInfo>();
+                //return new List<ClassInfo>();
+                return compilationUnitListener.OuterClassInfos;
             }
             catch (Exception e)
             {

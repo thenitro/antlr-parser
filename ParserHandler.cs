@@ -41,7 +41,7 @@ namespace antlr_parser
                         filePath);
                 case ".cs":
                     // cs
-                    return AntlrParseCSharp.OuterClassInfosFromJavaSource(
+                    return AntlrParseCSharp.OuterClassInfosFromCSharpSource(
                         sourceText,
                         filePath);
                 case ".h":
