@@ -29,6 +29,8 @@ namespace antlr_parser.Antlr4Impl.CSharp
                 //using this works for entering namespace
                 parser.namespace_member_declarations().EnterRule(compilationUnitListener);
 
+                parser.compilation_unit().EnterRule(compilationUnitListener);
+                
                 // replace this
                 //return new List<ClassInfo>();
                 return compilationUnitListener.OuterClassInfos;

@@ -96,8 +96,7 @@ namespace antlr_parser.Antlr4Impl.CSharp
             ClassBodyListener classBodyListener = new ClassBodyListener(className);
             context.class_body().EnterRule(classBodyListener);
             //entering nulls for now, I only care about class info
-            ClassInfo = new ClassInfo(className, null, null, new AccessFlags(), null, headerText, false);
-
+            ClassInfo = new ClassInfo(className, new List<MethodInfo>(), new List<FieldInfo>(), new AccessFlags(), new List<ClassInfo>(), headerText, false);
         }
     }
 
@@ -131,8 +130,8 @@ namespace antlr_parser.Antlr4Impl.CSharp
     public class ClassMemberDeclarationListener : CSharpParserBaseListener
     {
         ClassName parentClassName;
-        public List<MethodInfo> MethodInfos;
-        public List<ClassInfo> InnerClasses;
+        public List<MethodInfo> MethodInfos = new List<MethodInfo>();
+        public List<ClassInfo> InnerClasses = new List<ClassInfo>();
 
         public ClassMemberDeclarationListener(ClassName _parentClassName)
         {

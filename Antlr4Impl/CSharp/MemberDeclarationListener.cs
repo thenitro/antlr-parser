@@ -78,8 +78,8 @@ namespace antlr_parser.Antlr4Impl.CSharp
             //base.EnterMethod_declaration(context);
             string name = context.method_member_name().GetText();
             TypeName returnType = PrimitiveTypeName.Void;
-            MethodName methodName = new MethodName(parentClassName, name, returnType.FullyQualified, null);
-            MethodInfo = new MethodInfo(methodName, AccessFlags.AccPublic, parentClassName, null, null, context.method_body().GetFullText());
+            MethodName methodName = new MethodName(parentClassName, name, returnType.FullyQualified, new List<string>{"1", "2"});
+            MethodInfo = new MethodInfo(methodName, AccessFlags.AccPublic, parentClassName, new List<Argument>(), returnType, context.method_body().GetFullText());
         }
     }
 }
