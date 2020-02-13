@@ -1,6 +1,6 @@
 ﻿//Get into NAMESPACE, then CLASSES, then METHODS for now
-namespace TestProgram
-{
+//namespace TestProgram
+//{
     class Program
     {
         static void Main(string[] args)
@@ -30,4 +30,4 @@ namespace TestProgram
     }
 
     
-}
+//}

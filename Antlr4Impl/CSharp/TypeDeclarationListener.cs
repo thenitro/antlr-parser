@@ -87,7 +87,9 @@ namespace antlr_parser.Antlr4Impl.CSharp
         public override void EnterClass_definition([NotNull] CSharpParser.Class_definitionContext context)
         {
             //base.EnterClass_definition(context);
-            ClassName className = new ClassName($"{parentFile}");
+            ClassName className = new ClassName($"{parentFile}|{context.identifier().GetText()}");
+
+
             string headerText = context.GetFullText();
             if (headerText.Contains("{"))
             {
@@ -96,7 +98,7 @@ namespace antlr_parser.Antlr4Impl.CSharp
             ClassBodyListener classBodyListener = new ClassBodyListener(className);
             context.class_body().EnterRule(classBodyListener);
             //entering nulls for now, I only care about class info
-            ClassInfo = new ClassInfo(className, new List<MethodInfo>(), new List<FieldInfo>(), new AccessFlags(), new List<ClassInfo>(), headerText, false);
+            ClassInfo = new ClassInfo(className, classBodyListener.MethodInfos, new List<FieldInfo>(), new AccessFlags(), new List<ClassInfo>(), headerText, false);
         }
     }
 
@@ -147,16 +149,17 @@ namespace antlr_parser.Antlr4Impl.CSharp
             foreach(CSharpParser.Class_member_declarationContext memberDeclaration in context.class_member_declaration())
             {
                 memberDeclaration.EnterRule(memberDeclarationListener);
+                if (memberDeclarationListener.MethodInfo != null)
+                {
+                    MethodInfos.Add(memberDeclarationListener.MethodInfo);
+                }
+                if (memberDeclarationListener.InnerClass != null)
+                {
+                    InnerClasses.Add(memberDeclarationListener.InnerClass);
+                }
             }
 
-            if(memberDeclarationListener.MethodInfo != null)
-            {
-                MethodInfos.Add(memberDeclarationListener.MethodInfo);
-            }
-            if (memberDeclarationListener.InnerClass != null)
-            {
-                InnerClasses.Add(memberDeclarationListener.InnerClass);
-            }
+            
         }
     }
 }
