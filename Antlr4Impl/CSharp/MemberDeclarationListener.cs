@@ -2,6 +2,7 @@
 using Antlr4.Runtime;
 using Antlr4.Runtime.Misc;
 using Antlr4Gen.CSharp;
+using System;
 
 namespace antlr_parser.Antlr4Impl.CSharp
 {
@@ -18,11 +19,11 @@ namespace antlr_parser.Antlr4Impl.CSharp
         public override void EnterClass_member_declaration([NotNull] CSharpParser.Class_member_declarationContext context)
         {
             //base.EnterClass_member_declaration(context);
-            if(context.common_member_declaration() != null)
+            if (context.common_member_declaration() != null)
             {
                 MethodDeclarationListener methodDeclarationListener = new MethodDeclarationListener(parentClassName);
                 context.common_member_declaration().EnterRule(methodDeclarationListener);
-                if(methodDeclarationListener.InnerClass != null)
+                if (methodDeclarationListener.InnerClass != null)
                 {
                     InnerClass = methodDeclarationListener.InnerClass;
                 }
@@ -60,7 +61,10 @@ namespace antlr_parser.Antlr4Impl.CSharp
             //TODO: handle inner class definition
             if(context.class_definition() != null)
             {
-
+                
+                ClassDeclarationListener classDeclarationListener = new ClassDeclarationListener(parentClassName.FullyQualified);
+                context.class_definition().EnterRule(classDeclarationListener);
+                InnerClass = classDeclarationListener.ClassInfo;
             }
         }
     }

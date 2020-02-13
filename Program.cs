@@ -26,6 +26,18 @@ namespace antlr_parser
                     Console.WriteLine("Children:");
                     Console.WriteLine(codebaseElementInfo.Name.FullyQualified);
                 }
+                if(classInfo.innerClasses.Count > 0)
+                {
+                    foreach(ClassInfo innerClass in classInfo.innerClasses)
+                    {
+                        Console.WriteLine(innerClass.className.FullyQualified);
+                        foreach (ICodebaseElementInfo codebaseElementInfo in innerClass.Children)
+                        {
+                            Console.WriteLine("Children:");
+                            Console.WriteLine(codebaseElementInfo.Name.FullyQualified);
+                        }
+                    }
+                }
             }
         }
     }

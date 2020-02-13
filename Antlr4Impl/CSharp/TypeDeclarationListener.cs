@@ -98,7 +98,7 @@ namespace antlr_parser.Antlr4Impl.CSharp
             ClassBodyListener classBodyListener = new ClassBodyListener(className);
             context.class_body().EnterRule(classBodyListener);
             //entering nulls for now, I only care about class info
-            ClassInfo = new ClassInfo(className, classBodyListener.MethodInfos, new List<FieldInfo>(), new AccessFlags(), new List<ClassInfo>(), headerText, false);
+            ClassInfo = new ClassInfo(className, classBodyListener.MethodInfos, new List<FieldInfo>(), new AccessFlags(), classBodyListener.InnerClasses, headerText, false);
         }
     }
 

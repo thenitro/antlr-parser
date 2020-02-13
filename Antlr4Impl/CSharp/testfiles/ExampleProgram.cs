@@ -25,7 +25,13 @@
         {
             return "Hello";
         }
-
+        class TestingClass
+        {
+            public string GetTesting()
+            {
+                return "Testing";
+            }
+        }
 
     }
 
