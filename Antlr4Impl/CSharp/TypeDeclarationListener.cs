@@ -10,6 +10,7 @@ namespace antlr_parser.Antlr4Impl.CSharp
     {
         readonly string parentFilePath;
         public ClassInfo OuterClassInfo;
+        public List<ClassInfo> OuterClassInfos;
 
         public TypeDeclarationListener(string _parentFilePath)
         {
@@ -31,13 +32,104 @@ namespace antlr_parser.Antlr4Impl.CSharp
 
                 }
             }
-        }
-        public override void EnterType_declaration([NotNull] CSharpParser.Type_declarationContext context)
-        {
-            //base.EnterType_declaration(context);
+            if(context.namespace_declaration() != null)
+            {
+                NamespaceDeclarationListener namespaceDeclarationListener = new NamespaceDeclarationListener(parentFilePath);
+                context.namespace_declaration().EnterRule(namespaceDeclarationListener);
+                //return;
+                if(namespaceDeclarationListener.OuterClassInfos != null)
+                {
+                    OuterClassInfos = namespaceDeclarationListener.OuterClassInfos;
+                }
+            }
         }
         
 
+    }
+
+    public class NamespaceDeclarationListener : CSharpParserBaseListener
+    {
+        readonly string filePath;
+        //public ClassInfo OuterClassInfo;
+        public List<ClassInfo> OuterClassInfos;
+
+        public NamespaceDeclarationListener(string _filePath)
+        {
+            filePath = _filePath;
+        }
+        public override void EnterNamespace_declaration([NotNull] CSharpParser.Namespace_declarationContext context)
+        {
+            //WE GO HERE
+            if(context.namespace_body() != null)
+            {
+                NamespaceBodyListener namespaceBodyListener = new NamespaceBodyListener(filePath);
+                context.namespace_body().EnterRule(namespaceBodyListener);
+                if(namespaceBodyListener.OuterClassInfos != null)
+                {
+                    OuterClassInfos = namespaceBodyListener.OuterClassInfos;
+                }
+            }
+        }
+
+        
+    }
+
+    public class NamespaceBodyListener : CSharpParserBaseListener
+    {
+        readonly string filePath;
+        //public ClassInfo OuterClassInfo;
+        public List<ClassInfo> OuterClassInfos;
+
+        public NamespaceBodyListener(string _filePath)
+        {
+            filePath = _filePath;
+        }
+        public override void EnterNamespace_body([NotNull] CSharpParser.Namespace_bodyContext context)
+        {
+            //base.EnterNamespace_body(context);
+
+            if(context.namespace_member_declarations() != null)
+            {
+                NamespaceMemberListener namespaceMemberListener = new NamespaceMemberListener(filePath);
+                context.namespace_member_declarations().EnterRule(namespaceMemberListener);
+                if (namespaceMemberListener.OuterClassInfos != null)
+                {
+                    OuterClassInfos = namespaceMemberListener.OuterClassInfos;
+                }
+            }
+        }
+    }
+
+    public class NamespaceMemberListener : CSharpParserBaseListener
+    {
+        //public ClassInfo OuterClassInfo;
+        public List<ClassInfo> OuterClassInfos = new List<ClassInfo>();
+        readonly string filePath;
+
+        public NamespaceMemberListener(string _filePath)
+        {
+            filePath = _filePath;
+        }
+
+        public override void EnterNamespace_member_declarations([NotNull] CSharpParser.Namespace_member_declarationsContext context)
+        {
+            // base.EnterNamespace_member_declarations(context);
+            //return;
+            //WE GO HERE
+            TypeDeclarationListener typeDeclarationListener = new TypeDeclarationListener(filePath);
+            foreach (CSharpParser.Namespace_member_declarationContext namespaceMemberDeclaration in context.namespace_member_declaration())
+            {
+                namespaceMemberDeclaration.EnterRule(typeDeclarationListener);
+
+                if (typeDeclarationListener.OuterClassInfo != null)
+                {
+                    OuterClassInfos.Add(typeDeclarationListener.OuterClassInfo);
+                    //typeDeclarationListener.OuterClassInfo = null;
+                }
+            }
+
+
+        }
     }
 
     public class TypeDefinitionListener : CSharpParserBaseListener

@@ -27,7 +27,7 @@ namespace antlr_parser.Antlr4Impl.CSharp
                 //Tried this, learned I couldn't iterate over what I wanted to
                 //parser.compilation_unit().EnterRule(compilationUnitListener);
                 //using this works for entering namespace
-                parser.namespace_member_declarations().EnterRule(compilationUnitListener);
+                //parser.namespace_member_declarations().EnterRule(compilationUnitListener);
 
                 parser.compilation_unit().EnterRule(compilationUnitListener);
                 
