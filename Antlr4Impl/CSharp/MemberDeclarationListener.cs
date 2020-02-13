@@ -56,7 +56,10 @@ namespace antlr_parser.Antlr4Impl.CSharp
             {
                 MethodMemberListener methodMemberListener = new MethodMemberListener(parentClassName);
                 context.method_declaration().EnterRule(methodMemberListener);
-                MethodInfo = methodMemberListener.MethodInfo;
+                if(methodMemberListener.MethodInfo != null)
+                {
+                    MethodInfo = methodMemberListener.MethodInfo;
+                }
             }
             //TODO: handle inner class definition
             if(context.class_definition() != null)
@@ -64,8 +67,14 @@ namespace antlr_parser.Antlr4Impl.CSharp
                 
                 ClassDeclarationListener classDeclarationListener = new ClassDeclarationListener(parentClassName.FullyQualified);
                 context.class_definition().EnterRule(classDeclarationListener);
-                InnerClass = classDeclarationListener.ClassInfo;
+                if(classDeclarationListener.ClassInfo != null)
+                {
+                    InnerClass = classDeclarationListener.ClassInfo;
+
+                }
             }
+
+            
         }
     }
 
@@ -82,7 +91,7 @@ namespace antlr_parser.Antlr4Impl.CSharp
             //base.EnterMethod_declaration(context);
             string name = context.method_member_name().GetText();
             TypeName returnType = PrimitiveTypeName.Void;
-            MethodName methodName = new MethodName(parentClassName, name, returnType.FullyQualified, new List<string>{"1", "2"});
+            MethodName methodName = new MethodName(parentClassName, name, returnType.FullyQualified, new List<string> { "1" });
             MethodInfo = new MethodInfo(methodName, AccessFlags.AccPublic, parentClassName, new List<Argument>(), returnType, context.method_body().GetFullText());
         }
     }

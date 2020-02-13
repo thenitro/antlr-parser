@@ -1,39 +1,37 @@
 ﻿//Get into NAMESPACE, then CLASSES, then METHODS for now
-//namespace TestProgram
-//{
-    class Program
+
+class Program
+{
+    static void Main(string[] args)
     {
-        static void Main(string[] args)
+        int i = 10;
+        if (i % 2 == 0)
         {
-            int i = 10;
-            if (i % 2 == 0)
-            {
 
-            }
-            else
-            {
+        }
+        else
+        {
              
-            }
+        }
+    }
+
+    public void ProgramMethod(string _param)
+    {
+        string temp = _param;
+    }
+
+    class TestingClass
+    {
+        public void TestingClassMethod()
+        {
+            string temp = "Some really cool testing in here";
         }
 
-        public void TestingMethod(string _param)
+        public void TestingClassMethod2()
         {
-            string temp = _param;
-        }
-
-        private string GetHello()
-        {
-            return "Hello";
-        }
-        class TestingClass
-        {
-            public string GetTesting()
-            {
-                return "Testing";
-            }
+            string temp = "This is nothing important";
         }
 
     }
 
-    
-//}
+}

@@ -34,7 +34,7 @@ namespace antlr_parser.Antlr4Impl.CSharp
         }
         public override void EnterType_declaration([NotNull] CSharpParser.Type_declarationContext context)
         {
-            base.EnterType_declaration(context);
+            //base.EnterType_declaration(context);
         }
         
 
