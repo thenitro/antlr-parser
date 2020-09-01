@@ -9,3 +9,4 @@ GUI/publish
 GUI/GUI_TemporaryKey.pfx
 obj/Debug
 bin/
+obj
