@@ -1,7 +1,6 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using Antlr4Gen.Java;
 
 namespace antlr_parser.Antlr4Impl.Java
 {

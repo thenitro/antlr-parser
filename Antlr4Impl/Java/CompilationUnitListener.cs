@@ -1,5 +1,4 @@
 using System.Collections.Generic;
-using Antlr4Gen.Java;
 
 namespace antlr_parser.Antlr4Impl.Java
 {
