@@ -189,14 +189,16 @@ namespace antlr_parser.Antlr4Impl.Java
                 returnType.FullyQualified,
                 formalParametersListener
                     .Arguments
-                    .Select(arg => arg.Type.FullyQualified).ToList());
+                    .Select(arg => new Argument(
+                        arg.Type.FullyQualified, 
+                        TypeName.For(arg.Type.FullyQualified))).ToList());
             MethodInfo = new MethodInfo(
                 methodName,
                 AccessFlags.AccPublic, // TODO
                 parentClassName,
                 formalParametersListener.Arguments,
                 returnType,
-                methodBody);
+                new SourceCodeSnippet(methodBody, SourceCodeLanguage.Java));
         }
     }
 
@@ -368,7 +370,7 @@ namespace antlr_parser.Antlr4Impl.Java
                 fieldFqn,
                 parentClassName,
                 AccessFlags.AccPublic,
-                context.GetFullText());
+                new SourceCodeSnippet(context.GetFullText(), SourceCodeLanguage.Java));
         }
     }
 

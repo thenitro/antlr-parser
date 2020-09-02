@@ -35,6 +35,8 @@ namespace antlr_parser
         /// May be <c>null</c> if there is no containing element.
         /// </remarks>
         public abstract CodebaseElementName ContainmentParent { get; }
+        
+        public abstract string BranchName { get; set; }
 
         /// <summary>
         /// An element is also considered to contain itself.
@@ -51,13 +53,21 @@ namespace antlr_parser
 
         public abstract CodebaseElementType CodebaseElementType { get; }
 
+        public FileName ContainmentFile()
+        {
+            if (this is FileName) return this as FileName;
+            if (ContainmentParent == null) return null;
+            return ContainmentParent.ContainmentFile();
+        }
+
         public override bool Equals(object obj) =>
             obj is CodebaseElementName name &&
             name.FullyQualified == FullyQualified;
 
         public static bool operator ==(
             CodebaseElementName a,
-            CodebaseElementName b) => a?.FullyQualified == b?.FullyQualified;
+            CodebaseElementName b) =>
+            (a?.FullyQualified == b?.FullyQualified);
         public static bool operator !=(
             CodebaseElementName a,
             CodebaseElementName b) => !(a == b);
@@ -66,7 +76,7 @@ namespace antlr_parser
         
         static readonly Regex RegexWhitespace = new Regex(@"\s+");
 
-        public static string ReplaceWhitespace(string typeName) =>
+        protected static string ReplaceWhitespace(string typeName) =>
             RegexWhitespace.Replace(typeName, "").Replace(",", ", ");
     }
     
@@ -80,6 +90,7 @@ namespace antlr_parser
         public readonly string JavaFullyQualified;
         public override string ShortName { get; }
         public override CodebaseElementName ContainmentParent { get; }
+        public override string BranchName { get; set; }
 
         public override PackageName Package { get; }
         public override CodebaseElementType CodebaseElementType =>
@@ -92,21 +103,45 @@ namespace antlr_parser
             CodebaseElementName parent,
             string methodName,
             string returnType,
-            IEnumerable<string> argumentTypes)
+            IEnumerable<Argument> argumentTypes,
+            string overrideArgumentString = "")
         {
             ContainmentParent = parent;
             Package = parent.Package;
+
+            string paramString;
+
+            if (!string.IsNullOrEmpty(overrideArgumentString))
+            {
+                paramString = overrideArgumentString;
+                // get text between ()
+                paramString = paramString.Substring(paramString.IndexOf('(') + 1);
+                paramString = paramString.Substring(0, paramString.Length - 1);
+            }
+            else
+            {
+                paramString = argumentTypes.Aggregate("", // start with empty string to handle empty list case.
+                    (current, next) => current + next.Type.FullyQualified + " " + next.Name + ", ");
+
+                if (!string.IsNullOrEmpty(paramString))
+                {
+                    // trim last ", "
+                    paramString = paramString.Substring(0, paramString.Length - 2);
+                }
+            }
+
             FullyQualified =
                 $"{ContainmentParent.FullyQualified};" +
                 $"{methodName}:" +
-                $"({string.Join("", argumentTypes)}){returnType}";
+                $"({paramString}){returnType}";
 
             if (parent is ClassName className && !string.IsNullOrEmpty(className.JavaFullyQualified))
             {
                 JavaFullyQualified =
                     $"{className.JavaFullyQualified}" +
-                    $"{methodName}:" +
-                    $"({string.Join("", argumentTypes)}){returnType}";
+                    $"{methodName}";
+                    // TODO information loss -> this should include the params and the return type but they aren't solved fully
+                    //$"{methodName}:{paramString}){returnType}";
             }
 
             // To the user, constructors are identified by their declaring class' names.
@@ -121,15 +156,23 @@ namespace antlr_parser
         /// being stripped down to only a string, like when it is serialized.
         /// </summary>
         /// <param name="fullyQualified"></param>
-        public MethodName(string fullyQualified)
+        public MethodName(string fullyQualified, bool compilerMethod = false)
         {
             FullyQualified = fullyQualified;
+            if (string.IsNullOrEmpty(fullyQualified))
+            {
+                // root method
+                Package = new PackageName();
+                ContainmentParent = Package;
+                return;
+            }
+            
             string className = fullyQualified.Substring(
                 0,
                 fullyQualified.IndexOf(';'));
             ClassName parentClass = new ClassName(className);
             ContainmentParent = parentClass;
-            Package = new PackageName(parentClass);
+            Package = compilerMethod ? parentClass.CompilerPackage : parentClass.Package;
             
             string partAfterClassName =
                 FullyQualified.Substring(FullyQualified.IndexOf(';') + 1);
@@ -164,6 +207,7 @@ namespace antlr_parser
         public override string FullyQualified { get; }
         public override string ShortName { get; }
         public override CodebaseElementName ContainmentParent { get; }
+        public override string BranchName { get; set; }
 
         public override PackageName Package { get; }
         public override CodebaseElementType CodebaseElementType =>
@@ -248,6 +292,7 @@ namespace antlr_parser
     {
         public override string FullyQualified { get; }
         public override string ShortName { get; }
+        public override string BranchName { get; set; }
 
         TypeName ComponentType { get; }
 
@@ -280,6 +325,7 @@ namespace antlr_parser
 
         public override string FullyQualified { get; }
         public override string ShortName { get; }
+        public override string BranchName { get; set; }
 
         PrimitiveTypeName(string fullyQualified, string shortName)
         {
@@ -329,12 +375,16 @@ namespace antlr_parser
             CodebaseElementType.Class;
 
         public override CodebaseElementName ContainmentParent => IsOuterClass
-            ? Package
-            : (CodebaseElementName) ParentClass;
+            ? (CodebaseElementName) ContainmentFile
+            : ParentClass;
+
+        public override string BranchName { get; set; }
 
         public readonly FileName ContainmentFile;
         
-        public override PackageName Package => new PackageName(this);
+        public override PackageName Package => new PackageName(ContainmentFile);
+        
+        public PackageName CompilerPackage => new PackageName(this);
 
         public readonly bool IsOuterClass;
         public readonly ClassName ParentClass;
@@ -376,7 +426,7 @@ namespace antlr_parser
                         FullyQualified.Substring(
                             0,
                             // remove $ and name of inner
-                            FullyQualified.Length - ShortName.Length - 1));
+                            FullyQualified.LastIndexOf('$')));
             }
             else
             {
@@ -392,6 +442,7 @@ namespace antlr_parser
         public override string ShortName { get; }
 
         public override CodebaseElementName ContainmentParent => Package;
+        public override string BranchName { get; set; }
 
         public override PackageName Package => new PackageName(this);
         public override CodebaseElementType CodebaseElementType =>
@@ -425,7 +476,9 @@ namespace antlr_parser
             if (FullyQualified.Length > ShortName.Length)
             {
                 // the parent is the path above this package
-                // e.g. com.org.package.child -> short name: child, parent: com.org.package
+                // e.g. com.org.package.child ->
+                //   short name:  child
+                //   parent:      com.org.package
                 return new PackageName(
                     FullyQualified.Substring(
                         0,
@@ -441,6 +494,7 @@ namespace antlr_parser
 
         // these are dead-ends
         public override CodebaseElementName ContainmentParent => null;
+        public override string BranchName { get; set; }
         public override PackageName Package => this;
 
         /// <summary>
@@ -465,12 +519,17 @@ namespace antlr_parser
                 // root
                 ShortName = "";
             }
+            else if (packageName.Contains('■'))
+            {
+                // a path FQN
+                ShortName = packageName.Substring(packageName.LastIndexOf('/') + 1);
+            }
             else if (!packageName.Contains('.') && !packageName.Contains('/'))
             {
                 // top
                 ShortName = packageName;
             }
-            else if(packageName.Contains('.'))
+            else if (packageName.Contains('.'))
             {
                 // a compiler FQN
                 ShortName = packageName.Substring(packageName.LastIndexOf('.') + 1);

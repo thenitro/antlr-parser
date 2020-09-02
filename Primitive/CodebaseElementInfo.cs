@@ -78,7 +78,35 @@ namespace antlr_parser
 
         List<CodeReferenceEndpoint> ReferencesToThis { get; }
         List<CodeReferenceEndpoint> ReferencesFromThis { get; }
-        string SourceCode { get; set; }
+        SourceCodeSnippet SourceCode { get; set; }
+
+        void DiffAgainst(ICodebaseElementInfo branchInfo);
+    }
+
+    public static class CodebaseElementInfoExtensions
+    {
+        public static bool HasReferences(this ICodebaseElementInfo codebaseElementInfo)
+        {
+            return codebaseElementInfo.ReferencesToThis.Any() ||
+                   codebaseElementInfo.ReferencesFromThis.Any();
+        }
+
+        /// <summary>
+        /// A computed value representing how "long" the source code of the element whose code is present in this
+        /// collection is. The reason for not using the sum of the individual lengths is there is often redundancy
+        /// between multiple definitions of the same element, such as a partial method declaration vs. its
+        /// implementation in C#. In these cases, it's better to report the length of the implementation as the length
+        /// of the method's source code.
+        /// </summary>
+        public static int RepresentativeLength(
+            this List<SourceCodeSnippet> sourceCodeSnippets)
+        {
+            return sourceCodeSnippets.Any()
+                ? sourceCodeSnippets
+                    .Select(snippet => snippet.Text.Length)
+                    .Max()
+                : 0;
+        }
     }
     
     #endregion
@@ -106,10 +134,10 @@ namespace antlr_parser
         // These are unused
         public List<CodeReferenceEndpoint> ReferencesToThis { get; }
         public List<CodeReferenceEndpoint> ReferencesFromThis { get; }
-        public string SourceCode { get; set; }
+        public SourceCodeSnippet SourceCode { get; set; }
         
         public readonly bool IsTestPackage = false;
-                
+
         public PackageInfo(
             PackageName name,
             List<ICodebaseElementInfo> children)
@@ -126,6 +154,8 @@ namespace antlr_parser
             ReferencesToThis = new List<CodeReferenceEndpoint>();
             ReferencesFromThis = new List<CodeReferenceEndpoint>();
         }
+        
+        public void DiffAgainst(ICodebaseElementInfo branchInfo) { }
     }
 
     public class MethodInfo : ICodebaseElementInfo
@@ -150,10 +180,12 @@ namespace antlr_parser
         public FieldInfo Field { get; set; }
         public List<CodeReferenceEndpoint> ReferencesToThis { get; }
         public List<CodeReferenceEndpoint> ReferencesFromThis { get; }
-
-        public string SourceCode { get; set; }
+        
+        public SourceCodeSnippet SourceCode { get; set; }
 
         public int NumberOfRuntimeCalls;
+        public int SolvedCount = 0;
+        public int InvocationCount = 0;
 
         public MethodInfo(
             MethodName methodName,
@@ -161,7 +193,7 @@ namespace antlr_parser
             ClassName parentClass,
             IEnumerable<Argument> arguments,
             TypeName returnType,
-            string sourceCode)
+            SourceCodeSnippet sourceCode)
         {
             MethodName = methodName;
             this.accessFlags = accessFlags;
@@ -188,6 +220,11 @@ namespace antlr_parser
         }
 
         public override int GetHashCode() => MethodName?.GetHashCode() ?? 0;
+        
+        public void DiffAgainst(ICodebaseElementInfo branchInfo)
+        {
+            SourceCode.SetBranchText(branchInfo.SourceCode.Text);
+        }
     }
 
     public class Argument
@@ -222,14 +259,14 @@ namespace antlr_parser
         public int NumberOfRuntimeCalls =>
             Methods.Sum(methodInfo => methodInfo.NumberOfRuntimeCalls);
 
-        readonly List<string> sourceCodes;
-        public string SourceCode { get; set; }
+        readonly List<SourceCodeSnippet> sourceCodes;
+        public SourceCodeSnippet SourceCode { get; set; }
 
         public FieldInfo(
             FieldName fieldName,
             ClassName parentClass,
             AccessFlags accessFlags,
-            string sourceCode)
+            SourceCodeSnippet sourceCode)
         {
             ParentClass = parentClass;
             FieldName = fieldName;
@@ -252,6 +289,11 @@ namespace antlr_parser
         }
 
         public override int GetHashCode() => FieldName?.GetHashCode() ?? 0;
+        
+        public void DiffAgainst(ICodebaseElementInfo branchInfo)
+        {
+            SourceCode.SetBranchText(branchInfo.SourceCode.Text);
+        }
     }
 
     public class FileInfo : ICodebaseElementInfo
@@ -261,18 +303,20 @@ namespace antlr_parser
         public List<ICodebaseElementInfo> Children { get; }
         public List<CodeReferenceEndpoint> ReferencesToThis { get; }
         public List<CodeReferenceEndpoint> ReferencesFromThis { get; }
-        public string SourceCode { get; set; }
+        public SourceCodeSnippet SourceCode { get; set; }
         public string SourceUrl { get; }
-        public string LocalUrl { get; }
-        
-        public long Size => SourceCode?.Length ?? 0;
+        public string LocalUrl { get; set; }
+        public string BranchUrl { get; set; }
+
+        public long Size => SourceCode?.Text.Length ?? 0;
         public readonly string FileExtension;
-        
+
+        public bool IsParsed = false;
 
         /// <summary>
         /// A fully readable file
         /// </summary>
-        public FileInfo(FileName name, string sourceText)
+        public FileInfo(FileName name, SourceCodeSnippet sourceText)
         {
             FileName = name;
             ReferencesToThis = new List<CodeReferenceEndpoint>();
@@ -294,47 +338,73 @@ namespace antlr_parser
             FileExtension = ext;
             Children = new List<ICodebaseElementInfo>();
         }
+
+        public void DiffAgainst(ICodebaseElementInfo branchInfo)
+        {
+            SourceCode.SetBranchText(branchInfo.SourceCode.Text);
+        }
     }
 
+    [Serializable]
     public class ClassInfo : ICodebaseElementInfo
     {
         public readonly ClassName className;
         public CodebaseElementName Name => className;
         public readonly AccessFlags accessFlags;
-        public readonly List<ClassInfo> innerClasses;
+        public IEnumerable<ClassInfo> InnerClasses => 
+            Children.OfType<ClassInfo>();
+        
         public readonly bool IsTestClass;
 
-        public List<MethodInfo> Methods =>
-            Children.OfType<MethodInfo>().ToList();
-        public List<FieldInfo> Fields =>
-            Children.OfType<FieldInfo>().ToList();
+        public IEnumerable<MethodInfo> Methods =>
+            Children.OfType<MethodInfo>();
+        public IEnumerable<FieldInfo> Fields =>
+            Children.OfType<FieldInfo>();
+        
         public List<ICodebaseElementInfo> Children { get; }
 
         public List<CodeReferenceEndpoint> ReferencesToThis { get; }
         public List<CodeReferenceEndpoint> ReferencesFromThis { get; }
-        public string SourceCode { get; set; }
+        public SourceCodeSnippet SourceCode { get; set; }
         
         public ClassInfo(
             ClassName className,
             IEnumerable<MethodInfo> methods,
             IEnumerable<FieldInfo> fields,
             AccessFlags accessFlags,
-            List<ClassInfo> innerClasses,
-            string headerSource,
+            IEnumerable<ClassInfo> innerClasses,
+            SourceCodeSnippet headerSource,
             bool isTestClass)
         {
             this.className = className;
             this.accessFlags = accessFlags;
-            this.innerClasses = innerClasses;
 
             Children = new List<ICodebaseElementInfo>();
             Children.AddRange(fields);
             Children.AddRange(methods);
+            Children.AddRange(innerClasses);
 
             ReferencesToThis = new List<CodeReferenceEndpoint>();
             ReferencesFromThis = new List<CodeReferenceEndpoint>();
             SourceCode = headerSource;
             IsTestClass = isTestClass;
+        }
+
+        public void DiffAgainst(ICodebaseElementInfo branchInfo)
+        {
+            SourceCode.SetBranchText(branchInfo.SourceCode.Text);
+            
+            foreach (ICodebaseElementInfo branchChild in branchInfo.Children)
+            {
+                foreach (ICodebaseElementInfo originalChild in Methods)
+                {
+                    if (originalChild.Name == branchChild.Name)
+                    {
+                        originalChild.DiffAgainst(branchChild);
+                        break;
+                    }
+                }
+            }
         }
     }
 

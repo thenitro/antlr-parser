@@ -202,7 +202,7 @@ namespace antlr_parser.Antlr4Impl.Java
                 classBodyListener.FieldInfos,
                 modifier,
                 classBodyListener.InnerClasses,
-                headerText,
+                new SourceCodeSnippet(headerText, SourceCodeLanguage.Java),
                 false);
         }
     }
@@ -330,7 +330,7 @@ namespace antlr_parser.Antlr4Impl.Java
                 new List<FieldInfo>(),
                 modifier,
                 new List<ClassInfo>(),
-                headerText,
+                new SourceCodeSnippet(headerText, SourceCodeLanguage.Java),
                 false);
         }
     }
@@ -420,7 +420,7 @@ namespace antlr_parser.Antlr4Impl.Java
                 enumBodyDeclarationsListener.FieldInfos,
                 modifier,
                 new List<ClassInfo>(),
-                "",
+                new SourceCodeSnippet("", SourceCodeLanguage.Java), 
                 false);
         }
     }
