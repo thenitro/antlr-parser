@@ -3,6 +3,7 @@ using Antlr4.Runtime;
 using Antlr4.Runtime.Misc;
 using Antlr4Gen.CSharp;
 using System;
+using PrimitiveCodebaseElements.Primitive;
 
 namespace antlr_parser.Antlr4Impl.CSharp
 {
