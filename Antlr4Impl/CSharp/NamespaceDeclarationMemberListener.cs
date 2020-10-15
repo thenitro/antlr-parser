@@ -1,4 +1,3 @@
-using System;
 using System.Collections.Generic;
 using PrimitiveCodebaseElements.Primitive;
 
@@ -6,16 +5,18 @@ namespace antlr_parser.Antlr4Impl.CSharp
 {
     public class NamespaceDeclarationMemberListener : CSharpParserBaseListener
     {
-        private List<ClassInfo> _classes;
+        private readonly List<ClassInfo> _classes;
+        private readonly string _parentFileName;
         
-        public NamespaceDeclarationMemberListener(List<ClassInfo> classes)
+        public NamespaceDeclarationMemberListener(List<ClassInfo> classes, string parentFileName)
         {
             _classes = classes;
+            _parentFileName = parentFileName;
         }
 
         public override void EnterNamespace_member_declaration(CSharpParser.Namespace_member_declarationContext context)
         {            
-            var typeDeclarationListener = new TypeDeclarationListener();
+            var typeDeclarationListener = new TypeDeclarationListener(_parentFileName);
             context.type_declaration().EnterRule(typeDeclarationListener);
             
             _classes.Add(typeDeclarationListener.OuterClassInfo);
