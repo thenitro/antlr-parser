@@ -18,7 +18,7 @@ namespace antlr_parser.Antlr4Impl.CSharp
 
         public override void EnterCompilation_unit(CSharpParser.Compilation_unitContext context)
         {
-            var namespaceDeclarationListener = new NamespaceDeclarationListener(OuterClassInfos);
+            var namespaceDeclarationListener = new NamespaceDeclarationMemberListener(OuterClassInfos);
             
             foreach (var namespaceMemberDeclaration in context.namespace_member_declarations().namespace_member_declaration())
             {
