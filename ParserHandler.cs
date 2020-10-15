@@ -1,6 +1,7 @@
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
+using antlr_parser.Antlr4Impl.CSharp;
 using antlr_parser.Antlr4Impl.Java;
 using PrimitiveCodebaseElements.Primitive;
 
@@ -39,7 +40,9 @@ namespace antlr_parser
                         sourceText,
                         filePath);
                 case ".cs":
-                    // cs
+                    return AntlrParseCSharp.OuterClassInfosFromCSharpSource(
+                        sourceText,
+                        filePath);
                 case ".h":
                 case ".hxx":
                 case ".hpp":
