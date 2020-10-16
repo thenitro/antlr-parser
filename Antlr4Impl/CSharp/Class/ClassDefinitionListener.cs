@@ -28,20 +28,18 @@ namespace antlr_parser.Antlr4Impl.CSharp.Class
             var classBodyListener = new ClassBodyListener(name, _parentFileName);
             context.class_body().EnterRule(classBodyListener);
             
-            Console.WriteLine($"Implement methods");
-            Console.WriteLine($"Implement fields");
-            Console.WriteLine($"Implement innerClasses");
-            
-            Console.WriteLine($"Implement flags");
-            Console.WriteLine($"Implement headerSource");
+            Console.WriteLine($"TODO: Implement innerClasses");
+            Console.WriteLine($"TODO: Implement flags");
+
+            var headerText = context.GetText();
             
             ClassInfo = new ClassInfo(
                 name, 
-                null, 
-                null, 
-                AccessFlags.None, 
-                null, 
-                null, 
+                classBodyListener.MethodInfos, 
+                classBodyListener.FieldInfos,
+                AccessFlags.None,
+                new ClassInfo[0], 
+                new SourceCodeSnippet(headerText, SourceCodeLanguage.CSharp), 
                 false);
         }
     }

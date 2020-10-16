@@ -1,4 +1,3 @@
-using System;
 using PrimitiveCodebaseElements.Primitive;
 
 namespace antlr_parser.Antlr4Impl.CSharp.Class
@@ -18,6 +17,7 @@ namespace antlr_parser.Antlr4Impl.CSharp.Class
         public override void EnterTyped_member_declaration(CSharpParser.Typed_member_declarationContext context)
         {
             var type = PrimitiveTypeName.Void;
+            var className = string.Empty;
             
             if (context.type_() != null)
             {
@@ -25,11 +25,16 @@ namespace antlr_parser.Antlr4Impl.CSharp.Class
                 context.type_().EnterRule(typeListener);
 
                 type = typeListener.Type;
+                className = typeListener.ClassName;
             }
+            
+            var typeName = className != null
+                ? TypeName.For(className)
+                : type; 
             
             if (context.field_declaration() != null)
             {
-                var fieldDeclarationListener = new FieldDeclarationListener(_parentClassName, type);
+                var fieldDeclarationListener = new FieldDeclarationListener(_parentClassName, typeName.FullyQualified);
                 context.field_declaration().EnterRule(fieldDeclarationListener);
 
                 FieldInfo = fieldDeclarationListener.FieldInfo;
@@ -37,10 +42,9 @@ namespace antlr_parser.Antlr4Impl.CSharp.Class
                 
             if (context.method_declaration() != null)
             {
-                Console.WriteLine();
-                Console.WriteLine("method declaration: " + context.method_declaration().GetText());
-                Console.WriteLine();
-                Console.WriteLine("method declaration Name: " + context.method_declaration().method_member_name().GetText());
+                var methodDeclarationListener = new MethodDeclarationListener(_parentClassName, typeName);
+                context.method_declaration().EnterRule(methodDeclarationListener);
+                MethodInfo = methodDeclarationListener.MethodInfo;
             } 
         }
     }

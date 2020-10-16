@@ -9,9 +9,9 @@ namespace antlr_parser.Antlr4Impl.CSharp.Class
         public FieldInfo FieldInfo { get; private set; }
 
         private readonly ClassName _parentClassName;
-        private readonly PrimitiveTypeName _typeName;
+        private readonly string _typeName;
         
-        public FieldDeclarationListener(ClassName parentClassName, PrimitiveTypeName typeName)
+        public FieldDeclarationListener(ClassName parentClassName, string typeName)
         {
             _parentClassName = parentClassName;
             _typeName = typeName;
@@ -23,9 +23,9 @@ namespace antlr_parser.Antlr4Impl.CSharp.Class
             var fieldName = FieldName.FieldFqnFromNames(
                 fieldNameStr,
                 _parentClassName.FullyQualified,
-                _typeName.FullyQualified);
+                _typeName);
 
-            Console.WriteLine($"Field Name: {fieldNameStr}");
+            Console.WriteLine($"Parse Field: {fieldNameStr} of {_typeName}");
             
             FieldInfo = new FieldInfo(
                 fieldName,
